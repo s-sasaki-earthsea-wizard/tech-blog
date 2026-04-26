@@ -1,0 +1,35 @@
+---
+import type { HTMLAttributes } from 'astro/types';
+
+type Props = HTMLAttributes<'a'>;
+
+const { href, class: className, ...props } = Astro.props;
+
+// 末尾スラッシュを除いた base (例: '/tech-blog')。base 未設定時は '' になる。
+const baseUrl = import.meta.env.BASE_URL.replace(/\/$/, '');
+
+// 任意のパス文字列から base プレフィックスを取り除き、必ず '/' から始まる形に整える
+const stripBase = (value: string) => {
+	const removed = value.startsWith(baseUrl) ? value.slice(baseUrl.length) : value;
+	return removed.length === 0 ? '/' : removed;
+};
+
+const pathname = stripBase(Astro.url.pathname);
+const hrefPath = stripBase(typeof href === 'string' ? href : String(href ?? ''));
+const subpath = pathname.match(/[^\/]+/g);
+const isActive = hrefPath === pathname || hrefPath === '/' + (subpath?.[0] || '');
+---
+
+<a href={href} class:list={[className, { active: isActive }]} {...props}>
+	<slot />
+</a>
+<style>
+	a {
+		display: inline-block;
+		text-decoration: none;
+	}
+	a.active {
+		font-weight: bolder;
+		text-decoration: underline;
+	}
+</style>
