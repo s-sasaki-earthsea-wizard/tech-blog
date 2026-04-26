@@ -1,0 +1,105 @@
+---
+import { getCollection } from 'astro:content';
+import BaseHead from '../components/BaseHead.astro';
+import Footer from '../components/Footer.astro';
+import FormattedDate from '../components/FormattedDate.astro';
+import Header from '../components/Header.astro';
+import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
+
+// src/content/blog/ 配下の Markdown / MDX を全件読み込み、新しい順に並べる
+const posts = (await getCollection('blog')).sort(
+	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
+);
+
+// astro.config.mjs の base 設定を内部リンクに反映するためのプレフィックス
+// BASE_URL は環境により末尾スラッシュの有無が変わるため、無し側に正規化してから '/' を付け直す
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
+		<style>
+			main {
+				width: 960px;
+				max-width: calc(100% - 2em);
+				margin: auto;
+				padding: 3em 1em;
+			}
+			.intro {
+				margin-bottom: 3em;
+				text-align: center;
+			}
+			.intro h1 {
+				margin: 0 0 0.5em;
+				font-size: 2.4rem;
+			}
+			.intro p {
+				margin: 0;
+				color: rgb(var(--gray));
+			}
+			ul.posts {
+				list-style: none;
+				margin: 0;
+				padding: 0;
+			}
+			ul.posts li {
+				padding: 1.25em 0;
+				border-bottom: 1px solid rgb(var(--gray-light));
+			}
+			ul.posts li:last-child {
+				border-bottom: none;
+			}
+			ul.posts a {
+				display: block;
+				color: inherit;
+				text-decoration: none;
+			}
+			ul.posts a:hover .title {
+				color: var(--accent);
+			}
+			.title {
+				margin: 0 0 0.25em;
+				font-size: 1.4rem;
+				line-height: 1.2;
+			}
+			.date {
+				margin: 0 0 0.5em;
+				color: rgb(var(--gray));
+				font-size: 0.9rem;
+			}
+			.description {
+				margin: 0;
+				color: rgb(var(--gray-dark));
+			}
+		</style>
+	</head>
+	<body>
+		<Header />
+		<main>
+			<section class="intro">
+				<h1>{SITE_TITLE}</h1>
+				<p>{SITE_DESCRIPTION}</p>
+			</section>
+			<section>
+				<ul class="posts">
+					{
+						posts.map((post) => (
+							<li>
+								<a href={`${base}/blog/${post.id}/`}>
+									<h2 class="title">{post.data.title}</h2>
+									<p class="date">
+										<FormattedDate date={post.data.pubDate} />
+									</p>
+									<p class="description">{post.data.description}</p>
+								</a>
+							</li>
+						))
+					}
+				</ul>
+			</section>
+		</main>
+		<Footer />
+	</body>
+</html>
