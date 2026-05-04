@@ -10,7 +10,7 @@ heroImage: './assets/2026-05-04_simulating-gw150914-on-a-home-pc/title.png'
 
 In September 2015, LIGO directly detected gravitational waves for the first time in human history. The event, **GW150914**, came from the merger of two stellar-mass black holes more than a billion light-years away. To extract that signal from instrument noise — and to confirm what produced it — researchers compared the observed waveform against numerical relativity simulations that solve Einstein's field equations on supercomputers.
 
-Over a long holiday from April end to May beginning (in Japan, so called Golden Week), I tried to run one of those simulations on my home PC.
+Over a long holiday in late April through early May — what we in Japan call Golden Week — I tried to run one of those simulations on my home PC.
 
 This post is a writeup of that project: why I attempted it, what broke, the compromises I had to make to fit a multi-day binary-black-hole simulation into a 16-core, 93 GiB workstation, and how the results compared with the official Zenodo reference data.
 
@@ -22,15 +22,13 @@ I had a long holiday coming up. I was going to be away from home, my workstation
 
 GW150914 is the obvious answer. It is the most famous numerical relativity result of the last decade, the parameter file is fully public via the [Einstein Toolkit gallery](https://einsteintoolkit.org/gallery/bbh/index.html), and there is reference output on Zenodo (DOI: [10.5281/zenodo.155394](https://doi.org/10.5281/zenodo.155394)) to compare against. The whole exercise reduces to: run a published parameter file, plot the outputs, see how close I got.
 
-That turned out to be a slightly complex challenge.
-I now realize how superficial my first thought was.
+That turned out to be a serious understatement. My initial "just run a published config" framing was naive in hindsight.
 
-## A flash physics primer of Binary Black Hole Merger
+## A quick physics primer on binary black hole mergers
 
 Skip this section if you already know what gravitational waves are.
 
-Gravitational waves are ripples in spacetime emitted by accelerating masses. If you put a finger on water surface and vibrate it, you can see the water surface wave. Simply taking, both are similar phenomena.
-Einstein predicted them in 1916; LIGO confirmed them a century later.
+Gravitational waves are ripples in spacetime emitted by accelerating masses. If you dip your finger into water and waggle it, ripples spread across the surface — loosely speaking, gravitational waves are the same kind of phenomenon, but for spacetime itself. Einstein predicted them in 1916; LIGO confirmed them a century later.
 
 GW150914 was produced by a **binary black hole (BBH) merger**: two black holes of $\approx 36\,M_\odot$ and $\approx 29\,M_\odot$ spiraling together to form a single $\approx 62\,M_\odot$ remnant. The "missing" $\approx 3\,M_\odot$ was radiated away as gravitational waves — an enormous amount of energy released over a fraction of a second.
 
@@ -127,19 +125,17 @@ If you align the two runs at the merger time instead of the simulation start, th
 
 ### Waveform
 
-The real part of the $\psi_4$ extraction at $r = 100\,M$ shows the same envelope and the same merger spike — just shifted in phase by the same ~26 M as the orbit.
-
-While the waveform differs from the reference for quantitative evaluation, we can grasp it qualitatively.
+The real part of the $\psi_4$ extraction at $r = 100\,M$ shows the same envelope and the same merger spike — just shifted in phase by the same ~26 M as the orbit:
 
 ![Real part of psi4_22 extracted at r=100 M, full inspiral plus ringdown. The N=16 and N=28 envelopes match; the N=16 waveform is shifted later by ~26 M, the same offset seen in the orbit](./assets/2026-05-04_simulating-gw150914-on-a-home-pc/psi4_22_re.png)
 
-Aligning by merger time and plotting the amplitude on a log scale, the inspiral and merger peak match almost exactly. The peak amplitude differs by only **−1.79%** (7.21e-4 vs 7.34e-4). The post-merger ringdown noise floor is visibly higher in my run above $10^{-6}$ — which is the kind of thing you would expect coarser refinement to do.
+Quantitatively the two runs differ in phase, but qualitatively the waveform structure is well reproduced. Aligning by merger time and plotting the amplitude on a log scale, the inspiral and merger peak match almost exactly. The peak amplitude differs by only **−1.79%** (7.21e-4 vs 7.34e-4). The post-merger ringdown noise floor is visibly higher in my run above $10^{-6}$ — which is the kind of thing you would expect coarser refinement to do.
 
 ![|psi4_22| merger-aligned overlay on a log scale. Inspiral and merger peak overlap; the N=16 noise floor sits visibly higher than N=28 in the post-merger tail above 1e-6](./assets/2026-05-04_simulating-gw150914-on-a-home-pc/psi4_22_amplitude_aligned.png)
 
 ### Final black hole
 
-Tracking the mass and the spin of the final state black hole:
+Tracking the mass and spin of the final-state black hole:
 
 ![Ringdown of the common apparent horizon: mass M_h and dimensionless spin chi as a function of t - t_merger. Both N=16 and N=28 settle to flat values consistent with the official final-state numbers (M_f = 0.95, chi_f = 0.69)](./assets/2026-05-04_simulating-gw150914-on-a-home-pc/ringdown_aligned.png)
 
@@ -152,7 +148,7 @@ Tracking the mass and the spin of the final state black hole:
 | $\psi_4$ peak amplitude | 7.21e-4 | 7.34e-4 | −1.79% |
 | $\psi_4$ peak time | 113.7 M | 114.0 M | −0.28 M |
 
-All within the loose tolerances I set for a coarse-grid run, and well within the official LIGO uncertainty for the published BBH parameters.
+All within the loose tolerances I set for a coarse-grid run — the deviations from the reference came out smaller than I had expected.
 
 ### Mass loss
 
@@ -166,12 +162,9 @@ The Zenodo reference gives $\approx 3.07\,M_\odot$, and LIGO's published value i
 
 ## What I actually learned
 
-Running numerical simulations certainly required overcoming several difficulties and was quite challenging, but it is not a fundamentally scientific struggle.
-The harder part is staying honest about what they mean.
+Getting these runs to complete took real effort, but the difficulty was engineering, not science. The harder part is staying honest about what the numbers mean.
 
-I didn't write the Einstein Toolkit. 
-I didn't derive BSSN or any of the formulations that make these evolutions stable. 
-I built a development environment for Einstein Toolkit, edited a parameter file, fixed one resolution-induced crash, ran a published configuration on coarser grids, and made some matplotlib plots. The reason this worked at all is that an enormous amount of expertise from the numerical relativity community is embedded in the code I downloaded.
+I didn't write the Einstein Toolkit. I didn't derive BSSN or any of the formulations that make these evolutions stable. I built a development environment for Einstein Toolkit, edited a parameter file, fixed one resolution-induced crash, ran a published configuration on coarser grids, and made some matplotlib plots. The reason this worked at all is that an enormous amount of expertise from the numerical relativity community is embedded in the code I downloaded.
 
 It is also worth saying: an LLM helped a lot. Most of the grunt work — debugging the inter-patch crash, slicing HDF5 outputs, building comparison plots, automating the three-stage checkpointing — happened with Claude Opus 4.7 in the loop. Without that I doubt I could have completed this over a weekend. (I have a separate talk planned about the pros and cons of doing science-flavored work this way; I will write that one up as its own post.)
 
@@ -183,12 +176,11 @@ There is a quote from [Professor Dr. Masaru Shibata's 2010 review on the state o
 
 In 2010 he was looking at the proliferation of public numerical-relativity codes. In 2026, with LLMs in the loop, the gap between "I can run this" and "I can correctly interpret this" is wider than ever. I can produce plots that look right. I cannot, on my own, defend them rigorously. The two have to be kept separate.
 
-I just ran the simulation on my home computer, and it works based on the professional researcher's work. 
-It doesn't mean I can understand numerical relativity.
+That caution is real. But it doesn't have to crowd out the joy.
 
-At the same time, it brings me happy that even laypeople can recreate historically important physical phenomena on my own PCs by leveraging results shared by the research community.
+I just ran this simulation on my home computer, riding on top of decades of work by professional researchers. Doing so doesn't mean I understand numerical relativity. And yet — I find real joy in the fact that even a layperson can recreate a historically important physical event on a home PC, standing on what the research community has chosen to share openly.
 
-I thank from the bottom of my heart the open attitude of professional researchers, which indeed contributes to the development of science, technology, and engineering.
+From the bottom of my heart, I am grateful for the openness of that community: the Einstein Toolkit team who maintain a research-grade OSS framework, the people who curated and published the GW150914 parameters in the gallery, the researchers who deposited their reference simulation outputs on Zenodo, and reviewers like Shibata-sensei who write about the state of the field for a wider audience. That openness is exactly what moves science, technology, and engineering forward — for everyone, including amateurs like me.
 
 ## Summary
 
